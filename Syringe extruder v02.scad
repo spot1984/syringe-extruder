@@ -7,19 +7,23 @@
     v01
         [x] Model syringe
     v02
-        [] Drive
+        [x] Drive
             [x] Stepper motor
             [x] Shaft coupler
             [x] Threaded rod
-        [] Design mounting plate frame
-            [] Mount to printer
-            [] Stepper motor mount
-            [] Syringe mount
+        [x] Design mounting plate frame
+            [x] Mount to printer
+            [x] Stepper motor mount
+            [x] Syringe mount
+            [] Workshop 88 logo
+            [] Precise mounting hole locations
         [] Design plunger holder
-            [] plunger interface
+            [] Plunger interface
             [] Dual nut capture 
         
 */
+
+ver=2.0;    // Version
 
 // layer height
 nozzled=0.4;
@@ -58,15 +62,26 @@ nema17screwoffset=31/2;
 nema17screwholer=(3/2)+clearance;
 nema17motorw=42.3;
 nema17cornerr=4;
+nema17offset=44/2;
 
 $fn=32;
 
 
+mount_thickness=3;
+mount_height=80;
+mount_width=44;
+mount_depth=60;
+mount_hole_diameter=12;
+mount_syringe_offset=50;
+
+xbearingy1=20;
+xbearingy2=xbearingy1+45;
+
+// x bearing ends look like i3 58mm tall, bearings 45mm apart
 ///////////////////////////////////////////////////////////////////////////////
 // Variables after here will not appear in the cutomizer
 module hide_from_customizer() {} 
 
-ver=1.0;    // Version
 
 plunge=-syringe_plunger_throw*(sin($t*360)/2+.5);
 
@@ -74,28 +89,66 @@ plunge=-syringe_plunger_throw*(sin($t*360)/2+.5);
 // Preview
 // Guides for develoment
 if ($preview){
-    t([0,50,145])rx(180)rz(00) {
+    t([0,mount_syringe_offset,142])rx(180)rz(00) {
         tz(plunge) plunger();
         syringe();
     }
-       
 
-    ty(22) {
+    ty(nema17offset) {
         nema17steppermotor(pinion=false);
         tz(5) coupler();
         color([.4,.6,.6]) tz(15) cylinder(d=.25*25.4,h=290);    // Threaded rod
     }
 
+    color([.1,.2,.8]) mount();
     //t([0,0,10])nema17mountingplate();
     //#t([0,0,20])nema17holes();
+    
+    
+    color([.8,.8,.8]) for(i=[0,45]) t([-100,-4-mount_thickness-4,xbearingy1+i]) ry(90) cylinder(d=8,h=200);
+    
+
 }
 
 
 // linear_extrude(height=lh*2) text("HANGAR",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
 
-///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
 // modules
 
+// Mount to the body of the printer
+module mount()
+{
+    difference() {
+        union() {
+            // back
+            t([-mount_width/2,-mount_thickness,0]) cube([mount_width,mount_thickness,mount_height]);
+            // motor mount
+            t([-mount_width/2,-mount_thickness,0]) cube([mount_width,mount_depth+mount_thickness,mount_thickness]);
+            
+            // gussets
+            for (x=[-1,1]) tx(x*(mount_width/2-mount_thickness/2)-mount_thickness/2) hull(){
+                cube([mount_thickness,.01,mount_height]);
+                t([0,-mount_thickness,0]) cube([mount_thickness,mount_depth+mount_thickness,mount_thickness]);
+        }
+    }
+    // mounting holes (tbd need measurements!)
+    dx=10;
+    dy=10;
+    for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+45*i]) rx(-90) cylinder(d=3.3,h=10);
+    // Motor mounting holes
+    t([0,nema17offset,-.1])nema17holes(clr=.5);
+    // syringe mount
+    t([0,mount_syringe_offset,-1]) cylinder(d=mount_hole_diameter,h=mount_thickness+2);
+
+    }
+}
+
+// Actuator rides on threaded rod and moves the syringe plunger
+module actuator()
+{
+}
 module coupler(od=16,d1=5,d2=1/4*25.4,l=20)
 {
     color([.2,.4,.8]) difference()
@@ -272,19 +325,15 @@ module nema17steppermotor(pinion=true)
 }
 ////////////////////////////////////////////////////////////////////
 // NEMA 17 hole pattern
-module nema17holes(h=5, countersink=true)
+module nema17holes(h=5,clr=0)
 {
 	// center hole
-	cylinder(r=nema17r1,h=h);
+	cylinder(r=nema17r1+clr,h=h);
 	for(x=[-1,1]) for(y=[-1,1]) translate([x*nema17screwoffset,y*nema17screwoffset,0]) 
 	{
 		// screw hole
-		cylinder(r=nema17screwholer,h=h);
-		if (countersink)
-		{
-			// countersink
-			cylinder(r1=countersinkholer,r2=0,h=countersinkholer);
-		}
+		cylinder(r=nema17screwholer+clr,h=h);
+		
 	}
 }
 
