@@ -16,10 +16,11 @@
             [x] Stepper motor mount
             [x] Syringe mount
             [] Workshop 88 logo
-            [] Precise mounting hole locations
-        [] Design plunger holder
-            [] Plunger interface
-            [] Dual nut capture 
+            [] Version number
+            [] Precise mounting hole locations tbd
+        [x] Design plunger holder
+            [x] Plunger interface
+            [x] Dual nut capture 
         
 */
 
@@ -74,6 +75,13 @@ mount_depth=60;
 mount_hole_diameter=12;
 mount_syringe_offset=50;
 
+actuator_nut_separation=30;
+actuator_thickness=mount_thickness;
+actuator_height=80;
+actuator_width=44;
+actuator_depth=60;
+
+
 xbearingy1=20;
 xbearingy2=xbearingy1+45;
 
@@ -83,7 +91,16 @@ xbearingy2=xbearingy1+45;
 module hide_from_customizer() {} 
 
 
-plunge=-syringe_plunger_throw*(sin($t*360)/2+.5);
+plunge=0;//-syringe_plunger_throw*(sin($t*360)/2+.5);
+
+quarter20nut_flatd=11;
+quarter20nut_h=5.6;
+quarter20nut_id=.25*25.4;
+
+actuator_rod_diameter=16;
+actuator_plunger_id=syringe_plunger_head_diameter+1;
+actuator_plunger_od=actuator_plunger_id+actuator_thickness*2;
+actuator_height=40;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Preview
@@ -97,16 +114,20 @@ if ($preview){
     ty(nema17offset) {
         nema17steppermotor(pinion=false);
         tz(5) coupler();
-        color([.4,.6,.6]) tz(15) cylinder(d=.25*25.4,h=290);    // Threaded rod
+        color([.4,.6,.6]) tz(15) cylinder(d=.25*25.4,h=300);    // Threaded rod
+        color([.4,.8,.8]) tz(156-plunge) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
     }
 
     color([.1,.2,.8]) mount();
+    color([.1,.3,.7]) tz(156-plunge) actuator();
     //t([0,0,10])nema17mountingplate();
     //#t([0,0,20])nema17holes();
     
     
     color([.8,.8,.8]) for(i=[0,45]) t([-100,-4-mount_thickness-4,xbearingy1+i]) ry(90) cylinder(d=8,h=200);
     
+    //tz(3) ty(100)nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
+    //#ty(100)nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
 
 }
 
@@ -116,6 +137,24 @@ if ($preview){
 
 ///////////////////////////////////////////////////////////////////////////
 // modules
+
+// Actuator rides on threaded rod and moves the syringe plunger
+module actuator()
+{
+    difference() {
+    
+        hull() {
+            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
+            ty(mount_syringe_offset) cylinder(d=actuator_plunger_od,h=actuator_thickness*2);
+        }
+        tz(-.1) ty(mount_syringe_offset) cylinder(d1=actuator_plunger_id+4,d2=actuator_plunger_id,h=actuator_thickness);
+        // bottom nut hole
+        tz(-.1) ty(nema17offset) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+        // top nut hole
+        tz(actuator_height-quarter20nut_h) ty(nema17offset) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+
+    }
+}
 
 // Mount to the body of the printer
 module mount()
@@ -145,10 +184,6 @@ module mount()
     }
 }
 
-// Actuator rides on threaded rod and moves the syringe plunger
-module actuator()
-{
-}
 module coupler(od=16,d1=5,d2=1/4*25.4,l=20)
 {
     color([.2,.4,.8]) difference()
@@ -398,6 +433,27 @@ module pinion_gear(gearteeth=14,gearidmultiplier=1)
 				}
 			}
 		}
+	}
+}
+
+module nut(flatd=3,id=1,h=1)
+{
+	cornerd=flatd/.866;
+    difference() {
+        cylinder(d=cornerd,h=h,$fn=6);
+        tz(-1) cylinder(d=id,h=h+2);
+    }
+}
+
+module nuthole(flatd=3, h=1)
+{
+	$fn=6;
+	cornerd=flatd/.866;
+	cylinder(d=cornerd,h=h);
+	
+	for (a=[0:60:360])
+	{
+		rotate([0,0,a]) translate([cornerd/2,0,0]) cylinder(d=cornerd*.1,h=h);
 	}
 }
 
