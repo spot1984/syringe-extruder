@@ -18,9 +18,12 @@
             [] Workshop 88 logo
             [] Version number
             [] Precise mounting hole locations tbd
-        [x] Design plunger holder
-            [x] Plunger interface
+        [x] Design actuator plunger holder
+            [x] Plunger interface (Actuator cannot lift plunger for retraction)
             [x] Dual nut capture 
+        [] Redesign actuator to print on its back and the plunger top fits in a slot for retraction
+    
+
         
 */
 
@@ -75,12 +78,18 @@ mount_depth=60;
 mount_hole_diameter=12;
 mount_syringe_offset=50;
 
-actuator_nut_separation=30;
+
 actuator_thickness=mount_thickness;
-actuator_height=80;
 actuator_width=44;
 actuator_depth=60;
+actuator_rod_diameter=18;
+actuator_plunger_id=syringe_plunger_head_diameter+1;
+actuator_plunger_od=actuator_plunger_id+actuator_thickness*2;
+actuator_height=40;
 
+quarter20nut_flatd=11;
+quarter20nut_h=5.6;
+quarter20nut_id=.25*25.4;
 
 xbearingy1=20;
 xbearingy2=xbearingy1+45;
@@ -91,16 +100,9 @@ xbearingy2=xbearingy1+45;
 module hide_from_customizer() {} 
 
 
-plunge=0;//-syringe_plunger_throw*(sin($t*360)/2+.5);
+plunge=-syringe_plunger_throw*(sin($t*360)/2+.5);
 
-quarter20nut_flatd=11;
-quarter20nut_h=5.6;
-quarter20nut_id=.25*25.4;
 
-actuator_rod_diameter=16;
-actuator_plunger_id=syringe_plunger_head_diameter+1;
-actuator_plunger_od=actuator_plunger_id+actuator_thickness*2;
-actuator_height=40;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Preview
@@ -113,13 +115,14 @@ if ($preview){
 
     ty(nema17offset) {
         nema17steppermotor(pinion=false);
-        tz(5) coupler();
-        color([.4,.6,.6]) tz(15) cylinder(d=.25*25.4,h=300);    // Threaded rod
-        color([.4,.8,.8]) tz(156-plunge) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
+        color([.4,.4,.4]) tz(5) rz(plunge*20/25.4*360) coupler();
+        color([.6,.6,.6]) tz(15) rz(plunge*20/25.4*360) cylinder(d=.25*25.4,h=300);    // Threaded rod
+        color([.8,.8,.8]) tz(156-plunge-actuator_thickness-.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
+        color([.8,.8,.8]) tz(156-plunge-actuator_thickness+actuator_height-quarter20nut_h+.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
     }
 
     color([.1,.2,.8]) mount();
-    color([.1,.3,.7]) tz(156-plunge) actuator();
+    color([.1,.3,.7]) tz(156-plunge-actuator_thickness) actuator();
     //t([0,0,10])nema17mountingplate();
     //#t([0,0,20])nema17holes();
     
@@ -143,15 +146,36 @@ module actuator()
 {
     difference() {
     
-        hull() {
-            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
+        union() {
+            hull() {
+            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_thickness*2);
             ty(mount_syringe_offset) cylinder(d=actuator_plunger_od,h=actuator_thickness*2);
+            }
+            
+            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
+            
+            for(a=[-90:36:90]) {
+                s=sin(a);
+                c=cos(a);
+                hull() {
+                    t([s*(actuator_plunger_od/2-actuator_thickness/2),mount_syringe_offset+c*(actuator_plunger_od/2-actuator_thickness/2),0]) cylinder(d=actuator_thickness,h=actuator_thickness*2);
+                    t([s*(actuator_rod_diameter/2-actuator_thickness/2),nema17offset+c*(actuator_rod_diameter/2-actuator_thickness/2),0]) cylinder(d=actuator_thickness,h=actuator_height);
+                }
+                
+            }
         }
+            
+        
+        // recess for top of syringe
         tz(-.1) ty(mount_syringe_offset) cylinder(d1=actuator_plunger_id+4,d2=actuator_plunger_id,h=actuator_thickness);
+        
+        ty(nema17offset) {
         // bottom nut hole
-        tz(-.1) ty(nema17offset) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+        tz(-.1) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
         // top nut hole
-        tz(actuator_height-quarter20nut_h) ty(nema17offset) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+        tz(-.1) cylinder(d=.25*25.1+1, h=actuator_height+1);
+        tz(actuator_height-quarter20nut_h) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+        }
 
     }
 }
@@ -186,7 +210,7 @@ module mount()
 
 module coupler(od=16,d1=5,d2=1/4*25.4,l=20)
 {
-    color([.2,.4,.8]) difference()
+    difference()
     {
         cylinder(d=od,h=l);
         tz(-.01)cylinder(d=d1,h=l/2+.02);
