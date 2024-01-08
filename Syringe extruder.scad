@@ -1,12 +1,11 @@
 /*
-    Syringe Extruder for Tronxy
+    Squishstruder - Syringe Extruder for Tronxy
     by D. Scott Williamson 1/4/2024 
     
     (c) copyright 2024 All rights reserved.
-    
-    v01
+
+    v1.0
         [x] Model syringe
-    v02
         [x] Drive
             [x] Stepper motor
             [x] Shaft coupler
@@ -15,19 +14,17 @@
             [x] Mount to printer
             [x] Stepper motor mount
             [x] Syringe mount
-            [] Workshop 88 logo
-            [] Version number
+            [x] Workshop 88 logo
+            [x] Version number
+            [x] Rename Squishstruder
             [] Precise mounting hole locations tbd
         [x] Design actuator plunger holder
             [x] Plunger interface (Actuator cannot lift plunger for retraction)
             [x] Dual nut capture 
         [] Redesign actuator to print on its back and the plunger top fits in a slot for retraction
-    
-
-        
 */
 
-ver=2.0;    // Version
+ver="v1.0";    // Version
 
 // layer height
 nozzled=0.4;
@@ -123,23 +120,29 @@ if ($preview){
 
     color([.1,.2,.8]) mount();
     color([.1,.3,.7]) tz(156-plunge-actuator_thickness) actuator();
-    //t([0,0,10])nema17mountingplate();
-    //#t([0,0,20])nema17holes();
-    
     
     color([.8,.8,.8]) for(i=[0,45]) t([-100,-4-mount_thickness-4,xbearingy1+i]) ry(90) cylinder(d=8,h=200);
+
     
+    //t([0,0,10])nema17mountingplate();
+    //#t([0,0,20])nema17holes();
     //tz(3) ty(100)nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
     //#ty(100)nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+
 
 }
 
 
-// linear_extrude(height=lh*2) text("HANGAR",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
-
-
 ///////////////////////////////////////////////////////////////////////////
 // modules
+
+// 10mm wide W88 logo
+module w88logo()
+{
+	s=2.8;
+	scale([s,s,2]) translate([-8.1,-2.1,-2.6 /*+.125*/])
+	import("w88_logo.stl");
+}
 
 // Actuator rides on threaded rod and moves the syringe plunger
 module actuator()
@@ -194,7 +197,14 @@ module mount()
             for (x=[-1,1]) tx(x*(mount_width/2-mount_thickness/2)-mount_thickness/2) hull(){
                 cube([mount_thickness,.01,mount_height]);
                 t([0,-mount_thickness,0]) cube([mount_thickness,mount_depth+mount_thickness,mount_thickness]);
-        }
+            }
+            for(m=[0,1]) mirror([m,0,0]) t([mount_width/2+.75,15,20]) r([90,0,90]) s([2,2,3])w88logo();
+
+            t([mount_width/2+.75,26,38])rx(-52)rz(90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+
+    
+            t([-mount_width/2-.75,26,38])rx(-52)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+
     }
     // mounting holes (tbd need measurements!)
     dx=10;
@@ -204,7 +214,9 @@ module mount()
     t([0,nema17offset,-.1])nema17holes(clr=.5);
     // syringe mount
     t([0,mount_syringe_offset,-1]) cylinder(d=mount_hole_diameter,h=mount_thickness+2);
-
+    
+    // Version 
+    t([0,-mount_thickness+lh*1.9,xbearingy1+45/2])rx(90)linear_extrude(height=lh*2) text(str(ver),size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
     }
 }
 
