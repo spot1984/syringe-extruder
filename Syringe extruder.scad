@@ -17,12 +17,19 @@
             [x] Workshop 88 logo
             [x] Version number
             [x] Rename Squishstruder
-            [] Precise mounting hole locations tbd
+            [x] Precise mounting hole locations
         [x] Design actuator plunger holder
             [x] Plunger interface (Actuator cannot lift plunger for retraction)
             [x] Dual nut capture 
         [] Redesign actuator to print on its back and the plunger top fits in a slot for retraction
+        [] Need screw holes in back for screws to hold belts
+        [] Rename git repo
+        [] gusset for belt screws that does not interfere with mounting screws
 */
+
+
+
+
 
 ver="v1.0";    // Version
 
@@ -88,18 +95,20 @@ quarter20nut_flatd=11;
 quarter20nut_h=5.6;
 quarter20nut_id=.25*25.4;
 
-xbearingy1=20;
-xbearingy2=xbearingy1+45;
 
-// x bearing ends look like i3 58mm tall, bearings 45mm apart
+xbearingspacing=44;
+xbearingy1=20;
+xbearingy2=xbearingy1+xbearingspacing;
+mount_screw_spacing_x=18;
+mount_screw_spacing_y=25;
+mount_belt_screw_spacing=mount_width-mount_thickness; //42;
+
+// x bearing ends look like i3 58mm tall, bearings xbearingspacingmm apart
 ///////////////////////////////////////////////////////////////////////////////
 // Variables after here will not appear in the cutomizer
 module hide_from_customizer() {} 
 
-
 plunge=-syringe_plunger_throw*(sin($t*360)/2+.5);
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Preview
@@ -121,15 +130,17 @@ if ($preview){
     color([.1,.2,.8]) mount();
     color([.1,.3,.7]) tz(156-plunge-actuator_thickness) actuator();
     
-    color([.8,.8,.8]) for(i=[0,45]) t([-100,-4-mount_thickness-4,xbearingy1+i]) ry(90) cylinder(d=8,h=200);
+    color([.8,.8,.8]) for(i=[0,xbearingspacing]) t([-100,-4-mount_thickness-4,xbearingy1+i]) ry(90) cylinder(d=8,h=200);
 
     
     //t([0,0,10])nema17mountingplate();
     //#t([0,0,20])nema17holes();
     //tz(3) ty(100)nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
     //#ty(100)nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
-
-
+}
+else{
+    tx(-50) rx(90) mount();
+    tx(50) actuator();
 }
 
 
@@ -200,23 +211,27 @@ module mount()
             }
             for(m=[0,1]) mirror([m,0,0]) t([mount_width/2+.75,15,20]) r([90,0,90]) s([2,2,3])w88logo();
 
-            t([mount_width/2+.75,26,38])rx(-52)rz(90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+            t([mount_width/2,26,38])rx(-52)rz(90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
 
     
-            t([-mount_width/2-.75,26,38])rx(-52)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+            t([-mount_width/2-lh*2,26,38])rx(-52)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
 
     }
     // mounting holes (tbd need measurements!)
-    dx=10;
-    dy=10;
-    for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+45*i]) rx(-90) cylinder(d=3.3,h=10);
+    dx=mount_screw_spacing_x/2;
+    dy=mount_screw_spacing_y/2;
+   # for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=3.3,h=10);
+    
+    // Holes for screws to hold x belt
+    #for(x=[-1,1]) t([x*mount_belt_screw_spacing/2,-4,35]) rx(-90) cylinder(d=2.95,h=30);
+    
     // Motor mounting holes
     t([0,nema17offset,-.1])nema17holes(clr=.5);
     // syringe mount
     t([0,mount_syringe_offset,-1]) cylinder(d=mount_hole_diameter,h=mount_thickness+2);
     
     // Version 
-    t([0,-mount_thickness+lh*1.9,xbearingy1+45/2])rx(90)linear_extrude(height=lh*2) text(str(ver),size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+    t([0,-mount_thickness+lh*1.9,xbearingy1+xbearingspacing/2])rx(90)linear_extrude(height=lh*2) text(str(ver),size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
     }
 }
 
