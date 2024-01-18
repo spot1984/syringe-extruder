@@ -168,6 +168,33 @@ module actuator()
             
             ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
             
+        }
+        
+       
+        ty(nema17offset) {
+        // bottom nut hole
+        tz(-.1) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+        // top nut hole
+        tz(-.1) cylinder(d=.25*25.1+1, h=actuator_height+1);
+        tz(actuator_height-quarter20nut_h) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+        }
+
+    }
+}
+
+// Actuator rides on threaded rod and moves the syringe plunger
+module actuator_old()
+{
+    difference() {
+    
+        union() {
+            hull() {
+            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_thickness*2);
+            ty(mount_syringe_offset) cylinder(d=actuator_plunger_od,h=actuator_thickness*2);
+            }
+            
+            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
+            
             for(a=[-90:36:90]) {
                 s=sin(a);
                 c=cos(a);
@@ -178,7 +205,6 @@ module actuator()
                 
             }
         }
-            
         
         // recess for top of syringe
         tz(-.1) ty(mount_syringe_offset) cylinder(d1=actuator_plunger_id+4,d2=actuator_plunger_id,h=actuator_thickness);
