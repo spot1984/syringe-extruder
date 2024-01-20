@@ -21,10 +21,16 @@
         [x] Design actuator plunger holder
             [x] Plunger interface (Actuator cannot lift plunger for retraction)
             [x] Dual nut capture 
-        [] Redesign actuator to print on its back and the plunger top fits in a slot for retraction
-        [] Need screw holes in back for screws to hold belts
+        [-] Redesign actuator to print on its back and the plunger top fits in a slot for retraction
+        [x] Need screw holes in back for screws to hold belts
+        [x] Thickened area around belt mounting screws
         [] Rename git repo
         [] gusset for belt screws that does not interfere with mounting screws
+        
+    v2.0
+        [] retraction
+            [] Actuator to grab plunger head
+            [] Mount needs to grab syringe flange
 */
 
 
@@ -108,7 +114,7 @@ mount_belt_screw_spacing=mount_width-mount_thickness; //42;
 // Variables after here will not appear in the cutomizer
 module hide_from_customizer() {} 
 
-plunge=-syringe_plunger_throw*(sin($t*360)/2+.5);
+plunge=-30;//-syringe_plunger_throw*(sin($t*360)/2+.5);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Preview
@@ -118,7 +124,6 @@ if ($preview){
         tz(plunge) plunger();
         syringe();
     }
-
     ty(nema17offset) {
         nema17steppermotor(pinion=false);
         color([.4,.4,.4]) tz(5) rz(plunge*20/25.4*360) coupler();
@@ -168,33 +173,6 @@ module actuator()
             
             ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
             
-        }
-        
-       
-        ty(nema17offset) {
-        // bottom nut hole
-        tz(-.1) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
-        // top nut hole
-        tz(-.1) cylinder(d=.25*25.1+1, h=actuator_height+1);
-        tz(actuator_height-quarter20nut_h) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
-        }
-
-    }
-}
-
-// Actuator rides on threaded rod and moves the syringe plunger
-module actuator_old()
-{
-    difference() {
-    
-        union() {
-            hull() {
-            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_thickness*2);
-            ty(mount_syringe_offset) cylinder(d=actuator_plunger_od,h=actuator_thickness*2);
-            }
-            
-            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
-            
             for(a=[-90:36:90]) {
                 s=sin(a);
                 c=cos(a);
@@ -207,7 +185,7 @@ module actuator_old()
         }
         
         // recess for top of syringe
-        tz(-.1) ty(mount_syringe_offset) cylinder(d1=actuator_plunger_id+4,d2=actuator_plunger_id,h=actuator_thickness);
+        tz(-.1) ty(mount_syringe_offset) cylinder(d1=actuator_plunger_id+2,d2=actuator_plunger_id,h=actuator_thickness);
         
         ty(nema17offset) {
         // bottom nut hole
@@ -235,15 +213,18 @@ module mount()
                 cube([mount_thickness,.01,mount_height]);
                 t([0,-mount_thickness,0]) cube([mount_thickness,mount_depth+mount_thickness,mount_thickness]);
             }
-            for(m=[0,1]) mirror([m,0,0]) t([mount_width/2+.75,15,20]) r([90,0,90]) s([2,2,3])w88logo();
+
+            for(x=[-1,1]) t([x*mount_belt_screw_spacing/2,-mount_thickness,35]) rx(-90) cylinder(d1=5,d2=2.5,h=30);
+
+            for(m=[0,1]) mirror([m,0,0]) t([mount_width/2+.75,15,20]) r([90,0,90]) s([2,2,2.5])w88logo();
 
             t([mount_width/2,26,38])rx(-52)rz(90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
 
     
-            t([-mount_width/2-lh*2,26,38])rx(-52)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+            t([-mount_width/2,26,38])rx(-52)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
 
     }
-    // mounting holes (tbd need measurements!)
+    // mounting holes
     dx=mount_screw_spacing_x/2;
     dy=mount_screw_spacing_y/2;
    # for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=3.3,h=10);
