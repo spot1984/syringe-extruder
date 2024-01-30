@@ -25,7 +25,9 @@
         [x] Need screw holes in back for screws to hold belts
         [x] Thickened area around belt mounting screws
         [] Rename git repo
-        [] gusset for belt screws that does not interfere with mounting screws
+        [-] gusset for belt screws that does not interfere with mounting screws
+        [] Screw holes and ribs for an extension to hold syringe flange for retraction
+        [] syringe flange holder for retraction
         
     v2.0
         [] retraction
