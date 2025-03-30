@@ -24,18 +24,18 @@
         [-] Redesign actuator to print on its back and the plunger top fits in a slot for retraction
         [x] Need screw holes in back for screws to hold belts
         [x] Thickened area around belt mounting screws
-        [] Rename git repo
         [-] gusset for belt screws that does not interfere with mounting screws
-        [] Screw holes and ribs for an extension to hold syringe flange for retraction
         [] syringe flange holder for retraction
-        
+            [] Fange holder
+            [] Arms
+            [] pins
+            [] 
+        [] Redesign acutator to hold plunger for retraction
+        [] Rename git repo
     v2.0
-        [] retraction
-            [] Actuator to grab plunger head
-            [] Mount needs to grab syringe flange
+        [] Parametric for different syringes
+        [] Customizer
 */
-
-
 
 
 
@@ -82,10 +82,9 @@ nema17offset=44/2;
 
 $fn=32;
 
-
 mount_thickness=3;
 mount_height=80;
-mount_width=44;
+mount_width=44; //44;
 mount_depth=60;
 mount_hole_diameter=12;
 mount_syringe_offset=50;
@@ -123,7 +122,7 @@ plunge=-30;//-syringe_plunger_throw*(sin($t*360)/2+.5);
 // Guides for develoment
 if ($preview){
     t([0,mount_syringe_offset,142])rx(180)rz(00) {
-        tz(plunge) plunger();
+        tz(plunge) rz(45) plunger();
         syringe();
     }
     ty(nema17offset) {
@@ -134,6 +133,8 @@ if ($preview){
         color([.8,.8,.8]) tz(156-plunge-actuator_thickness+actuator_height-quarter20nut_h+.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
     }
 
+
+    //color([.1,.8,.8]) retainer();
     color([.1,.2,.8]) mount();
     color([.1,.3,.7]) tz(156-plunge-actuator_thickness) actuator();
     
@@ -199,6 +200,31 @@ module actuator()
 
     }
 }
+
+
+module retainer()
+{
+    
+}
+
+
+/* false start
+retainer_length=100;
+retainer_thickness=mount_thickness;
+retainer_depth=20;  //syringe_body_diameter+2;
+retainer_gap=syringe_body_flange_thickness+.3;
+retainer_end_diameter=10;
+// Retainer holds the syringe in place during retraction
+module retainer()
+{
+    //t([-retainer_width/2, -retainer_depth/2, retainer_length]) 
+    hull()
+    {
+        t([-mount_width/2+mount_thickness,mount_syringe_offset,20]) ry(90) cylinder(d=retainer_end_diameter, h=retainer_thickness);
+        t([-mount_width/2+mount_thickness,mount_syringe_offset-retainer_depth/2,140]) cube([retainer_thickness,retainer_end_diameter,10]);
+    }
+}
+*/
 
 // Mount to the body of the printer
 module mount()
@@ -268,6 +294,7 @@ module plunger(){
         color([.1,.1,.1]) tz(syringe_plunger_length) cylinder(d=syringe_body_diameter-2*syringe_body_wall_thickness,h=syringe_plunger_tip_thickness);   
     }
 }
+
 
 module syringe()
 {
