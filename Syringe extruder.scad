@@ -5,27 +5,25 @@
     (c) copyright 2024 All rights reserved.
 
     todo
-    v2.0
         [] Rename git repo
-        [] Rebuild in FreeCAD
-        [] Raise motor and syringe mount for more clearance
-            [] Bring motor and syringe forward to clear mounting screw heads
-            
-        [] syringe flange holder for retraction and to prevent rotation
-            [] Fange holder
-            [] Arms
-            [] pins
-            [] Redesign acutator to hold plunger for retraction
-
+        [-] Rebuild in FreeCAD - decided it was too much effort
         [-] Parametric for different syringes
         [-] Customizer
 
+
     version history
+    v2.1
+        [] Redesign acutator to hold plunger for retraction
+
+    v2.0
+        [x] Thicken belt screw walls
+        [x] Raise motor and syringe mount for more clearance
+            [x] Bring motor and syringe forward to clear mounting screw heads
+        [x] syringe flange holder for retraction and to prevent rotation
+            [x] Flange holder
     v1.1
         [x] Mounting screw holes larger (3.3 -> 4.5)
         [x] Vertical screw spacing on mount needs to be wider (24.185)
-        
-        
     v1.0 Printed on Voron in blue PLA 4 walls .3mm layers
         [x] Model syringe
         [x] Drive
@@ -50,7 +48,7 @@
 */
 
 
-ver="v1.1";    // Version
+ver="v2.0";    // Version
 
 // layer height
 nozzled=0.4;
@@ -94,8 +92,8 @@ nema17offset=44/2;
 $fn=32;
 
 mount_thickness=3;
-mount_height=80;
-mount_width=44; //44;
+mount_height=180;
+mount_width=52; //44;
 mount_depth=60;
 mount_hole_diameter=12;
 mount_syringe_offset=50;
@@ -127,27 +125,34 @@ module hide_from_customizer() {}
 
 plunge=-30;//-syringe_plunger_throw*(sin($t*360)/2+.5);
 
+raisefloor=36;
+screwclearance=3;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Preview
 // Guides for develoment
 if ($preview){
-    t([0,mount_syringe_offset,142])rx(180)rz(00) {
-        tz(plunge) rz(45) plunger();
-        syringe();
-    }
-    ty(nema17offset) {
-        nema17steppermotor(pinion=false);
-        color([.4,.4,.4]) tz(5) rz(plunge*20/25.4*360) coupler();
-        color([.6,.6,.6]) tz(15) rz(plunge*20/25.4*360) cylinder(d=.25*25.4,h=300);    // Threaded rod
-        color([.8,.8,.8]) tz(156-plunge-actuator_thickness-.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
-        color([.8,.8,.8]) tz(156-plunge-actuator_thickness+actuator_height-quarter20nut_h+.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
-    }
+    ty(screwclearance) tz(raisefloor) {
+        
+        t([0,mount_syringe_offset,142])rx(180)rz(00) {
+            tz(plunge) rz(45) plunger();
+            syringe();
+        }
+        ty(nema17offset) {
+            nema17steppermotor(pinion=false);
+            color([.4,.4,.4]) tz(5) rz(plunge*20/25.4*360) coupler();
+            color([.6,.6,.6]) tz(15) rz(plunge*20/25.4*360) cylinder(d=.25*25.4,h=300);    // Threaded rod
+            color([.8,.8,.8]) tz(156-plunge-actuator_thickness-.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
+            color([.8,.8,.8]) tz(156-plunge-actuator_thickness+actuator_height-quarter20nut_h+.1) nut(flatd=quarter20nut_flatd,h=quarter20nut_h,id=quarter20nut_id);
+        }
 
+        color([.1,.3,.7]) tz(156-plunge-actuator_thickness) actuator();
+    }
 
     //color([.1,.8,.8]) retainer();
     color([.1,.2,.8]) mount();
-    color([.1,.3,.7]) tz(156-plunge-actuator_thickness) actuator();
     
+    // bearing rails
     color([.8,.8,.8]) for(i=[0,xbearingspacing]) t([-100,-4-mount_thickness-4,xbearingy1+i]) ry(90) cylinder(d=8,h=200);
 
     
@@ -242,38 +247,63 @@ module mount()
     difference() {
         union() {
             // back
-            t([-mount_width/2,-mount_thickness,0]) cube([mount_width,mount_thickness,mount_height]);
+            t([-mount_width/2,-mount_thickness,3]) cube([mount_width,mount_thickness,mount_height-3]);
             // motor mount
-            t([-mount_width/2,-mount_thickness,0]) cube([mount_width,mount_depth+mount_thickness,mount_thickness]);
+            t([-mount_width/2,-mount_thickness,raisefloor]) cube([mount_width,mount_depth+mount_thickness,mount_thickness]);
             
             // gussets
             for (x=[-1,1]) tx(x*(mount_width/2-mount_thickness/2)-mount_thickness/2) hull(){
-                cube([mount_thickness,.01,mount_height]);
-                t([0,-mount_thickness,0]) cube([mount_thickness,mount_depth+mount_thickness,mount_thickness]);
+                tz(3)cube([mount_thickness,.01,mount_height-3]);    // the 3 is for connector clearance
+                tz(syringe_body_length+raisefloor+12-1)cube([mount_thickness,mount_depth,1]);  // top to make a box
+                t([0,-mount_thickness,raisefloor]) cube([mount_thickness,mount_depth+mount_thickness,mount_thickness]);
             }
 
-            for(x=[-1,1]) t([x*mount_belt_screw_spacing/2,-mount_thickness,35]) rx(-90) cylinder(d1=5,d2=2.5,h=30);
+            // syringe mount
+            tz(syringe_body_length+raisefloor) hull() {
+                ty(mount_syringe_offset+screwclearance) cylinder(d=syringe_body_diameter+mount_thickness*2,h=12);
+                t([-mount_width/2,-mount_thickness,0]) cube([mount_width,mount_depth+mount_thickness,12]);
+            }
+            
+            // flared sides for belt screws
+            for(x=[-1,1]) t([x*mount_belt_screw_spacing/2,-mount_thickness,35]) rx(-90) cylinder(d1=7,d2=3,h=30);
 
-            for(m=[0,1]) mirror([m,0,0]) t([mount_width/2+.75,15,20]) r([90,0,90]) s([2,2,2.5])w88logo();
 
-            t([mount_width/2,26,38])rx(-52)rz(90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+            // side SQUISHSTRUDER text
+            t([mount_width/2,28,104])rx(-73)rz(90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=17,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
 
     
-            t([-mount_width/2,26,38])rx(-52)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+            t([-mount_width/2,28,104])rx(-73)rz(-90)rx(90)linear_extrude(height=lh*2) text("SQUISHSTRUDER",size=17,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
+
+            // side logos
+            for(m=[0,1]) mirror([m,0,0]) t([mount_width/2+.75,40,158]) r([90,0,90]) s([3,3,2.5]) w88logo();
 
     }
     // mounting holes
     dx=mount_screw_spacing_x/2;
     dy=mount_screw_spacing_y/2;
-   # for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=4.5,h=10);
+    #for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=4.5,h=10);
+    // visual clearance for screw heads
+    #for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5+10-2.5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=6.5,h=2.5);
     
     // Holes for screws to hold x belt
     #for(x=[-1,1]) t([x*mount_belt_screw_spacing/2,-4,35]) rx(-90) cylinder(d=2.95,h=30);
     
-    // Motor mounting holes
-    t([0,nema17offset,-.1])nema17holes(clr=.5);
-    // syringe mount
-    t([0,mount_syringe_offset,-1]) cylinder(d=mount_hole_diameter,h=mount_thickness+2);
+    
+    ty(screwclearance) tz(raisefloor) {
+        // Motor mounting holes
+        t([0,nema17offset,-.1])nema17holes(clr=.5);
+        // syringe mount
+        t([0,mount_syringe_offset,-1]) cylinder(d=mount_hole_diameter,h=mount_thickness+2);
+
+        // hole for threaded rod at top
+        t([0,nema17offset,syringe_body_length-1]) cylinder(d=12,h=12+2);
+        
+        hull() for (x=[-1,1]) for (z=[-1,1]) for(y=[0,10]) t([x*.2,mount_syringe_offset+y,syringe_body_length+5.4+z*.2])syringeflange();
+            
+        hull() for(y=[0,10])t([0,mount_syringe_offset+y,syringe_body_length-1]) cylinder(d=syringe_body_diameter+1,h=12+2);
+        
+
+    }    
     
     // Version 
     t([0,-mount_thickness+lh*1.9,xbearingy1+xbearingspacing/2])rx(90)linear_extrude(height=lh*2) text(str(ver),size=6.5,font="PT Utah Condensed:style=Bold",halign="center",valign="center",$fn=32);
@@ -306,28 +336,34 @@ module plunger(){
 }
 
 
+
 module syringe()
 {
     color([.91,.91,1,.5]) 
     difference() {
         union() {
             syringebody(0);
-            hull() {
-                cylinder(d=syringe_body_flange_diameter,h=syringe_body_flange_thickness);
-                for(x=[-1,1]) for (y=[-1,1]) 
-                    t([x*((syringe_body_flange_width/2)-syringe_body_flange_radius),y*((syringe_body_flange_length/2)-syringe_body_flange_radius),0]) 
-                cylinder(r=syringe_body_flange_radius,h=syringe_body_flange_thickness);
-            }
+            syringeflange();
         }
         syringebody(syringe_body_wall_thickness);
     }
 }
+
 module syringebody(offset=0) {
     tz(-offset*5)cylinder(d=syringe_body_diameter-offset*2,h=syringe_body_length+offset*5.01);
     tz(syringe_body_length) {
         cylinder(d1=syringe_body_diameter-offset*2,d2=syringe_body_diameter1-offset*2,h=syringe_body_length1+offset*.01);
         tz(syringe_body_length1)cylinder(d1=syringe_body_diameter1-offset*2,d2=syringe_body_diameter2-offset*2,h=syringe_body_length2+offset*.01);
         }
+}
+
+module syringeflange() {
+    hull() {
+        cylinder(d=syringe_body_flange_diameter,h=syringe_body_flange_thickness);
+        for(x=[-1,1]) for (y=[-1,1]) 
+            t([x*((syringe_body_flange_width/2)-syringe_body_flange_radius),y*((syringe_body_flange_length/2)-syringe_body_flange_radius),0]) 
+        cylinder(r=syringe_body_flange_radius,h=syringe_body_flange_thickness);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
