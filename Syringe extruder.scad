@@ -4,7 +4,29 @@
     
     (c) copyright 2024 All rights reserved.
 
-    v1.0
+    todo
+    v2.0
+        [] Rename git repo
+        [] Rebuild in FreeCAD
+        [] Raise motor and syringe mount for more clearance
+            [] Bring motor and syringe forward to clear mounting screw heads
+            
+        [] syringe flange holder for retraction and to prevent rotation
+            [] Fange holder
+            [] Arms
+            [] pins
+            [] Redesign acutator to hold plunger for retraction
+
+        [-] Parametric for different syringes
+        [-] Customizer
+
+    version history
+    v1.1
+        [x] Mounting screw holes larger (3.3 -> 4.5)
+        [x] Vertical screw spacing on mount needs to be wider (24.185)
+        
+        
+    v1.0 Printed on Voron in blue PLA 4 walls .3mm layers
         [x] Model syringe
         [x] Drive
             [x] Stepper motor
@@ -25,21 +47,10 @@
         [x] Need screw holes in back for screws to hold belts
         [x] Thickened area around belt mounting screws
         [-] gusset for belt screws that does not interfere with mounting screws
-        [] syringe flange holder for retraction
-            [] Fange holder
-            [] Arms
-            [] pins
-            [] 
-        [] Redesign acutator to hold plunger for retraction
-        [] Rename git repo
-    v2.0
-        [] Parametric for different syringes
-        [] Customizer
 */
 
 
-
-ver="v1.0";    // Version
+ver="v1.1";    // Version
 
 // layer height
 nozzled=0.4;
@@ -102,12 +113,11 @@ quarter20nut_flatd=11;
 quarter20nut_h=5.6;
 quarter20nut_id=.25*25.4;
 
-
 xbearingspacing=44;
 xbearingy1=20;
 xbearingy2=xbearingy1+xbearingspacing;
 mount_screw_spacing_x=18;
-mount_screw_spacing_y=25;
+mount_screw_spacing_y=24.185;   // v1.0 25;
 mount_belt_screw_spacing=mount_width-mount_thickness; //42;
 
 // x bearing ends look like i3 58mm tall, bearings xbearingspacingmm apart
@@ -255,7 +265,7 @@ module mount()
     // mounting holes
     dx=mount_screw_spacing_x/2;
     dy=mount_screw_spacing_y/2;
-   # for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=3.3,h=10);
+   # for(i=[0,1]) for(x=[-1,1])for(y=[-1,1]) t([x*dx,-5,y*dy+xbearingy1+xbearingspacing*i]) rx(-90) cylinder(d=4.5,h=10);
     
     // Holes for screws to hold x belt
     #for(x=[-1,1]) t([x*mount_belt_screw_spacing/2,-4,35]) rx(-90) cylinder(d=2.95,h=30);
