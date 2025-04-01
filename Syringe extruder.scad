@@ -48,7 +48,7 @@
 */
 
 
-ver="v2.0";    // Version
+ver="v2.1";    // Version
 
 // layer height
 nozzled=0.4;
@@ -135,7 +135,7 @@ if ($preview){
     ty(screwclearance) tz(raisefloor) {
         
         t([0,mount_syringe_offset,142])rx(180)rz(00) {
-            tz(plunge) rz(45) plunger();
+            tz(plunge-actuator_thickness+.65) rz(45) plunger();
             syringe();
         }
         ty(nema17offset) {
@@ -182,11 +182,10 @@ module w88logo()
 module actuator()
 {
     difference() {
-    
         union() {
             hull() {
-            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_thickness*2);
-            ty(mount_syringe_offset) cylinder(d=actuator_plunger_od,h=actuator_thickness*2);
+            ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_thickness*3);
+            ty(mount_syringe_offset) cylinder(d=actuator_plunger_od,h=actuator_thickness*3);
             }
             
             ty(nema17offset) cylinder(d=actuator_rod_diameter,h=actuator_height);
@@ -195,51 +194,43 @@ module actuator()
                 s=sin(a);
                 c=cos(a);
                 hull() {
-                    t([s*(actuator_plunger_od/2-actuator_thickness/2),mount_syringe_offset+c*(actuator_plunger_od/2-actuator_thickness/2),0]) cylinder(d=actuator_thickness,h=actuator_thickness*2);
+                    t([s*(actuator_plunger_od/2-actuator_thickness/2),mount_syringe_offset+c*(actuator_plunger_od/2-actuator_thickness/2),0]) cylinder(d=actuator_thickness,h=actuator_thickness*3);
                     t([s*(actuator_rod_diameter/2-actuator_thickness/2),nema17offset+c*(actuator_rod_diameter/2-actuator_thickness/2),0]) cylinder(d=actuator_thickness,h=actuator_height);
                 }
-                
             }
         }
         
         // recess for top of syringe
-        tz(-.1) ty(mount_syringe_offset) cylinder(d1=actuator_plunger_id+2,d2=actuator_plunger_id,h=actuator_thickness);
+        hull() for(y=[0,30])t([0,mount_syringe_offset+y,actuator_thickness])
+            cylinder(d=syringe_plunger_head_diameter+1,h=syringe_plunger_thickness+.25);
+        
+        // slot for neck of syringe
+        hull() for(y=[0,30])t([0,mount_syringe_offset+y,-.1]) 
+            cylinder(d=22,h=syringe_plunger_thickness*2+.5+.2);
         
         ty(nema17offset) {
-        // bottom nut hole
-        tz(-.1) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
-        // top nut hole
-        tz(-.1) cylinder(d=.25*25.1+1, h=actuator_height+1);
-        tz(actuator_height-quarter20nut_h) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+            // bottom nut hole
+            tz(-.1) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
+            // top nut hole
+            tz(-.1) cylinder(d=.25*25.1+1, h=actuator_height+1);
+            tz(actuator_height-quarter20nut_h) nuthole(flatd=quarter20nut_flatd+.5,h=quarter20nut_h+.4);
         }
-
     }
 }
 
-
-module retainer()
-{
-    
-}
-
-
-/* false start
-retainer_length=100;
-retainer_thickness=mount_thickness;
-retainer_depth=20;  //syringe_body_diameter+2;
-retainer_gap=syringe_body_flange_thickness+.3;
-retainer_end_diameter=10;
-// Retainer holds the syringe in place during retraction
-module retainer()
-{
-    //t([-retainer_width/2, -retainer_depth/2, retainer_length]) 
-    hull()
-    {
-        t([-mount_width/2+mount_thickness,mount_syringe_offset,20]) ry(90) cylinder(d=retainer_end_diameter, h=retainer_thickness);
-        t([-mount_width/2+mount_thickness,mount_syringe_offset-retainer_depth/2,140]) cube([retainer_thickness,retainer_end_diameter,10]);
+module plunger(){
+    tz(-syringe_plunger_thickness-syringe_plunger_length2) {
+        color([.91,.91,1,.5]) {
+            tz(0) cylinder(d=syringe_plunger_head_diameter,h=syringe_plunger_thickness);   
+            for(a=[0,90])rz(a) hull() {
+                cube([syringe_plunger_wall_width2,syringe_plunger_thickness,.01],center=true);
+                tz(syringe_plunger_length2) cube([syringe_plunger_wall_width,syringe_plunger_thickness,.01],center=true);
+                tz(syringe_plunger_length) cube([syringe_plunger_wall_width,syringe_plunger_thickness,.01],center=true);
+            }
+        }
+        color([.1,.1,.1]) tz(syringe_plunger_length) cylinder(d=syringe_body_diameter-2*syringe_body_wall_thickness,h=syringe_plunger_tip_thickness);   
     }
 }
-*/
 
 // Mount to the body of the printer
 module mount()
@@ -301,8 +292,6 @@ module mount()
         hull() for (x=[-1,1]) for (z=[-1,1]) for(y=[0,10]) t([x*.2,mount_syringe_offset+y,syringe_body_length+5.4+z*.2])syringeflange();
             
         hull() for(y=[0,10])t([0,mount_syringe_offset+y,syringe_body_length-1]) cylinder(d=syringe_body_diameter+1,h=12+2);
-        
-
     }    
     
     // Version 
@@ -320,22 +309,6 @@ module coupler(od=16,d1=5,d2=1/4*25.4,l=20)
         t([-.5,-od*.25,-.01]) cube([1,od,l+.02]);
     }
 }
-
-module plunger(){
-    tz(-syringe_plunger_thickness-syringe_plunger_length2) {
-        color([.91,.91,1,.5]) {
-            tz(0) cylinder(d=syringe_plunger_head_diameter,h=syringe_plunger_thickness);   
-            for(a=[0,90])rz(a) hull() {
-                cube([syringe_plunger_wall_width2,syringe_plunger_thickness,.01],center=true);
-                tz(syringe_plunger_length2) cube([syringe_plunger_wall_width,syringe_plunger_thickness,.01],center=true);
-                tz(syringe_plunger_length) cube([syringe_plunger_wall_width,syringe_plunger_thickness,.01],center=true);
-            }
-        }
-        color([.1,.1,.1]) tz(syringe_plunger_length) cylinder(d=syringe_body_diameter-2*syringe_body_wall_thickness,h=syringe_plunger_tip_thickness);   
-    }
-}
-
-
 
 module syringe()
 {
